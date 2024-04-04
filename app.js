@@ -10,7 +10,7 @@ const PORT = 5001;
 app.use(cors());
 app.use(bodyParser.json());
 
-const uri = "mongodb+srv://paboda95official:MongoDb1995@cluster0.wjjt4qr.mongodb.net/projecttestdb?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://paboda95official:MongoDb1995@cluster0.wjjt4qr.mongodb.net/concepta?retryWrites=true&w=majority&appName=Cluster0";
 
 // MongoDB connection
 mongoose.connect(uri)

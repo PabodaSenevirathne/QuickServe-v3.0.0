@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 
 // GET all users
-router.get('/users', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const users = await User.find();
         res.json(users);
@@ -12,11 +12,11 @@ router.get('/users', async (req, res) => {
     }
 });
 
-// GET a specific user by ID
-router.get('/users/:id', async (req, res) => {
+// GET a specific user by userId
+router.get('/:userId', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (user == null) {
+        const user = await User.findOne({ userId: req.params.userId });
+        if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
         res.json(user);
@@ -26,58 +26,50 @@ router.get('/users/:id', async (req, res) => {
 });
 
 // POST a new user
-router.post('/users', async (req, res) => {
-    const user = new User({
-        email: req.body.email,
-        password: req.body.password,
-        username: req.body.username,
-        shippingAddress: req.body.shippingAddress
-    });
-
+router.post('/', async (req, res) => {
+    const { userId, email, password, userName, firstName, lastName, shippingAddress } = req.body;
     try {
-        const newUser = await user.save();
+        const newUser = new User({ userId, email, password, userName, firstName, lastName, shippingAddress });
+        await newUser.save();
         res.status(201).json(newUser);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-// UPDATE a user by ID
-router.patch('/users/:id', async (req, res) => {
+// UPDATE a user by userId
+router.put('/:userId', async (req, res) => {
+    const { email, password, userName, firstName, lastName, shippingAddress } = req.body;
     try {
-        const user = await User.findById(req.params.id);
-        if (user == null) {
+        const user = await User.findOne({ userId: req.params.userId });
+        if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        if (req.body.email != null) {
-            user.email = req.body.email;
-        }
-        if (req.body.password != null) {
-            user.password = req.body.password;
-        }
-        if (req.body.username != null) {
-            user.username = req.body.username;
-        }
-        if (req.body.shippingAddress != null) {
-            user.shippingAddress = req.body.shippingAddress;
-        }
-        const updatedUser = await user.save();
-        res.json(updatedUser);
+        user.email = email;
+        user.password = password;
+        user.userName = userName;
+        user.firstName = firstName;
+        user.lastName = lastName;
+        user.shippingAddress = shippingAddress;
+        await user.save();
+        res.json(user);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-// DELETE a user by ID
-router.delete('/users/:id', async (req, res) => {
+// DELETE a user by userId
+router.delete('/:userId', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (user == null) {
+        const user = await User.findOneAndDelete({ userId: req.params.userId });
+
+        if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        await user.remove();
+
         res.json({ message: 'User deleted' });
     } catch (err) {
+        console.error(err.message);
         res.status(500).json({ message: err.message });
     }
 });

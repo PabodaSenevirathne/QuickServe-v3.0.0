@@ -5,7 +5,6 @@ const Product = require('../models/Product');
 // GET all products
 router.get('/', async (req, res) => {
     try {
-        console.log("test");
         const products = await Product.find();
         res.json(products);
     } catch (err) {
@@ -15,35 +14,38 @@ router.get('/', async (req, res) => {
 });
 
 // GET a single product by ID
-router.get('/:id', async (req, res) => {
+router.get('/:productId', async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findOne({ productId: req.params.productId });
         if (!product) {
             return res.status(404).json({ msg: 'Product not found' });
         }
         res.json(product);
     } catch (err) {
         console.error(err.message);
-        if (err.kind === 'ObjectId') {
-            return res.status(404).json({ msg: 'Product not found' });
-        }
         res.status(500).send('Server Error');
     }
 });
 
 // POST a new product
 router.post('/', async (req, res) => {
-    const { description, image, pricing, shippingCost } = req.body;
+    const { productId, description, image, price, shippingCost } = req.body;
 
     try {
-        const newProduct = new Product({
+        let product = await Product.findOne({ productId });
+        if (product) {
+            return res.status(400).json({ msg: 'Product already exists' });
+        }
+
+        product = new Product({
+            productId,
             description,
             image,
-            pricing,
+            price,
             shippingCost
         });
 
-        const product = await newProduct.save();
+        await product.save();
         res.json(product);
     } catch (err) {
         console.error(err.message);
@@ -52,11 +54,11 @@ router.post('/', async (req, res) => {
 });
 
 // PUT (update) a product
-router.put('/:id', async (req, res) => {
-    const { description, image, pricing, shippingCost } = req.body;
+router.put('/:productId', async (req, res) => {
+    const { description, image, price, shippingCost } = req.body;
 
     try {
-        let product = await Product.findById(req.params.id);
+        let product = await Product.findOne({ productId: req.params.productId });
 
         if (!product) {
             return res.status(404).json({ msg: 'Product not found' });
@@ -64,38 +66,32 @@ router.put('/:id', async (req, res) => {
 
         product.description = description;
         product.image = image;
-        product.pricing = pricing;
+        product.price = price;
         product.shippingCost = shippingCost;
 
         await product.save();
         res.json(product);
     } catch (err) {
         console.error(err.message);
-        if (err.kind === 'ObjectId') {
-            return res.status(404).json({ msg: 'Product not found' });
-        }
         res.status(500).send('Server Error');
     }
 });
 
 // DELETE a product
-router.delete('/:id', async (req, res) => {
+router.delete('/:productId', async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findOneAndDelete({ productId: req.params.productId });
 
         if (!product) {
             return res.status(404).json({ msg: 'Product not found' });
         }
 
-        await product.remove();
         res.json({ msg: 'Product removed' });
     } catch (err) {
         console.error(err.message);
-        if (err.kind === 'ObjectId') {
-            return res.status(404).json({ msg: 'Product not found' });
-        }
         res.status(500).send('Server Error');
     }
 });
 
 module.exports = router;
+

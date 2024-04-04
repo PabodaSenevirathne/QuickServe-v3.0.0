@@ -3,7 +3,7 @@ const router = express.Router();
 const Order = require('../models/Order');
 
 // GET all orders
-router.get('/orders', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const orders = await Order.find();
         res.json(orders);
@@ -12,11 +12,11 @@ router.get('/orders', async (req, res) => {
     }
 });
 
-// GET a specific order by ID
-router.get('/orders/:id', async (req, res) => {
+// GET a specific order by orderId
+router.get('/:orderId', async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id);
-        if (order == null) {
+        const order = await Order.findOne({ orderId: req.params.orderId });
+        if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
         res.json(order);
@@ -25,32 +25,54 @@ router.get('/orders/:id', async (req, res) => {
     }
 });
 
-// POST a new order
-router.post('/orders', async (req, res) => {
-    const order = new Order({
-        products: req.body.products,
-        quantities: req.body.quantities,
-        user: req.body.user,
-        totalAmount: req.body.totalAmount,
-        orderDate: req.body.orderDate || Date.now()
-    });
-
+// GET orders by user ID
+router.get('/user/:userId', async (req, res) => {
     try {
-        const newOrder = await order.save();
+        const orders = await Order.find({ user: req.params.userId });
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// POST a new order
+router.post('/', async (req, res) => {
+    const { orderId, products, quantities, user, totalAmount } = req.body;
+    try {
+        const newOrder = new Order({ orderId, products, quantities, user, totalAmount });
+        await newOrder.save();
         res.status(201).json(newOrder);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-// DELETE an order by ID
-router.delete('/orders/:id', async (req, res) => {
+// UPDATE an order by orderId
+router.put('/:orderId', async (req, res) => {
+    const { products, quantities, totalAmount } = req.body;
     try {
-        const order = await Order.findById(req.params.id);
-        if (order == null) {
+        const order = await Order.findOne({ orderId: req.params.orderId });
+        if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
-        await order.remove();
+        order.products = products;
+        order.quantities = quantities;
+        order.totalAmount = totalAmount;
+        await order.save();
+        res.json(order);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// DELETE an order by orderId
+router.delete('/:orderId', async (req, res) => {
+    try {
+        const order = await Order.findOne({ orderId: req.params.orderId });
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        await Order.deleteOne({ orderId: req.params.orderId });
         res.json({ message: 'Order deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });

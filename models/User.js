@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
-    username: String,
-    purchaseHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
+    userName: { type: String },
+    firstName: String,
+    lastName: String,
     shippingAddress: String
 });
 
